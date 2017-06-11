@@ -14,6 +14,9 @@ trait AppSettings {
 
   lazy private val configApp = ConfigFactory.load()
 
+  val portNumber = configApp.getInt("api.portNumber")
+  val ticketReservationActorName = configApp.getString("api.actorName")
+
   val requestActorName = configApp.getString("request.actorName")
 
   /*

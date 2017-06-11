@@ -8,7 +8,7 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.imdb.config.AppSettings._
-import com.imdb.protocols.Protocols.{GetIp, MovieInfo}
+import com.imdb.protocols.Protocols.{GetIp}
 
 import scala.concurrent.{Await, Future}
 
@@ -34,31 +34,6 @@ object RequestActor {
       }
     }
   }
-
-  def getMovie(imdbId: String) : String = {
-
-    val url = s"http://www.omdbapi.com/?i=$imdbId"
-    println(url)
-    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
-
-    var result = ""
-
-    responseFuture map { res =>
-      res.status match {
-        case OK =>
-          Unmarshal(res.entity).to[String].map { info =>
-            result = s"The information is: $info"
-          }
-        case _ =>
-          Unmarshal(res.entity).to[String].map { body =>
-            result = s"The response status is ${res.status} and response body is ${body}"
-          }
-      }
-    }
-
-    println(result)
-    return result
-  }
 }
 
 class RequestActor extends Actor {
@@ -67,10 +42,6 @@ class RequestActor extends Actor {
 
     case GetIp(url) => {
       RequestActor.getIp(url)
-    }
-
-    case MovieInfo(imdbId) => {
-      RequestActor.getMovie(imdbId)
     }
 
     case msg =>
