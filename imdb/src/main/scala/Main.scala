@@ -1,6 +1,6 @@
 import Main.shutdown
 import com.imdb.client.RequestActor
-import com.imdb.protocols.Protocols.MovieInfo
+import com.imdb.protocols.Protocols.{GetIp, MovieInfo}
 
 object Main extends App {
 
@@ -10,7 +10,9 @@ object Main extends App {
   sys.addShutdownHook(shutdown)
 
   val requestActor = actorSystem.actorOf(RequestActor.props, requestActorName)
-  requestActor ! MovieInfo("")
+
+  requestActor ! GetIp("https://api.ipify.org?format=json")
+  requestActor ! MovieInfo("tt0111161")
 
   actorSystem.whenTerminated
 

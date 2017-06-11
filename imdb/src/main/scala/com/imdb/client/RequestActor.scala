@@ -8,47 +8,71 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.imdb.config.AppSettings._
-import com.imdb.protocols.Protocols.MovieInfo
+import com.imdb.protocols.Protocols.{GetIp, MovieInfo}
 
 import scala.concurrent.Future
 
 object RequestActor {
+
   def props(): Props = Props(new RequestActor())
+
+  def getIp(url: String) : Unit = {
+
+    val responseFuture: Future[HttpResponse] =
+      Http().singleRequest(HttpRequest(uri = url))
+
+    responseFuture map { res =>
+      res.status match {
+        case OK =>
+          Unmarshal(res.entity).to[IpInfo].map { info =>
+            println(s"The information for my ip is: $info")
+          }
+        case _ =>
+          Unmarshal(res.entity).to[String].map { body =>
+            println(s"The response status is ${res.status} and response body is ${body}")
+          }
+      }
+    }
+  }
+
+  def getMovie(imdbId: String) : String = {
+
+    val url = s"http://www.omdbapi.com/?i=$imdbId"
+    println(url)
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
+
+//    var result = ""
+
+    responseFuture map { res =>
+      res.status match {
+        case OK =>
+          Unmarshal(res.entity).to[String].map { info =>
+            println(s"The information is: $info")
+          }
+        case _ =>
+          Unmarshal(res.entity).to[String].map { body =>
+            println(s"The response status is ${res.status} and response body is ${body}")
+          }
+      }
+    }
+
+    return ""
+  }
 }
 
 class RequestActor extends Actor {
 
   def receive: Receive = {
 
+    case GetIp(url) => {
+      RequestActor.getIp(url)
+    }
+
     case MovieInfo(imdbId) => {
-
-      val responseFuture: Future[HttpResponse] =
-        Http().singleRequest(HttpRequest(uri = "https://api.ipify.org?format=json"))
-
-      responseFuture map { res =>
-        res.status match {
-          case OK =>
-            Unmarshal(res.entity).to[IpInfo].map { info =>
-              println(s"The information for my ip is: $info")
-//              shutdown()
-            }
-          case _ =>
-            Unmarshal(res.entity).to[String].map { body =>
-              println(s"The response status is ${res.status} and response body is ${body}")
-//              shutdown()
-            }
-        }
-      }
+      RequestActor.getMovie(imdbId)
     }
 
     case msg =>
       log.info(s"[${self.path.name}]: UNKNOWN MESSAGE: $msg FROM ${sender.path}")
-  }
-
-  def shutdown() = {
-    Http().shutdownAllConnectionPools().onComplete{ _ =>
-//      actorSystem.whenTerminated
-    }
-
   }
 }
