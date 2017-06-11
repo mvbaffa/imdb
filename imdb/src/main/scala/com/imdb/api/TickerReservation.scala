@@ -60,8 +60,10 @@ class TickerReservation(portNumber: Int) extends RestApi {
     redis.set(movieRegister.imdbId+movieRegister.screenId, movieJson)
     println(s"* Register Movie - Movie Returned: ${movieInfo}\n")
 
-    val returnInfo = ReturnInfo(true, "Operation Succeeded", movieInfo.imdbId, movieInfo.availableSeats, 0,
-      movieInfo.screenId, movieInfo.movieTitle)
+//    val returnInfo = ReturnInfo(true, "Operation Succeeded", movieInfo.imdbId, movieInfo.availableSeats, movieInfo.reservedSeats,
+//      movieInfo.screenId, movieInfo.movieTitle)
+
+    val returnInfo = ReturnInfo(true, "Operation Succeeded", movieInfo)
     returnInfo
   }
 
@@ -87,22 +89,18 @@ class TickerReservation(portNumber: Int) extends RestApi {
   // localhost:8080/movies?id=tt0111162&screen=san francisco movies
   def getMovie(movieId: String, screenId: String): ReturnInfo = {
 
-//    var returnInfo: ReturnInfo = ???
     val movieInfo = fetchMovie(movieId, screenId)
 
     movieInfo.imdbId match {
 
       case "N/A" => {
         println(s"* GetMovie - Movie ${movieId}, ${screenId} not found\n")
-        val movieInfo = MovieInfo("N/A", 0, 0, "N/A", "N/A")
-        ReturnInfo(false, "Movie not found", movieInfo.imdbId, movieInfo.availableSeats, 0,
-          movieInfo.screenId, movieInfo.movieTitle)
+        ReturnInfo(false, "Movie not found", MovieInfo("N/A", 0, 0, "N/A", "N/A"))
       }
 
       case _ => {
         println(s"* GetMovie - Movie Returned: ${movieId}, ${screenId}\n")
-        ReturnInfo(true, "Operation Succeeded", movieInfo.imdbId, movieInfo.availableSeats, movieInfo.reservedSeats,
-          movieInfo.screenId, movieInfo.movieTitle)
+        ReturnInfo(true, "Operation Succeeded", movieInfo)
       }
     }
   }
@@ -113,7 +111,7 @@ class TickerReservation(portNumber: Int) extends RestApi {
 
     returnInfo.operationStatus match {
       case true => {
-        println(s"* ReserveMovie - Movie Returned: ${returnInfo.imdbId}, ${returnInfo.screenId}")
+        println(s"* ReserveMovie - Movie Returned: ${returnInfo.movieInfo}")
       }
       case false => {
         println(s" * ReserveMovie - Movie ${movieReservation.imdbId}, ${movieReservation.screenId} not found\n")
@@ -121,19 +119,20 @@ class TickerReservation(portNumber: Int) extends RestApi {
       }
     }
 
-    if(returnInfo.reservedSeats == returnInfo.availableSeats) {
+    if(returnInfo.movieInfo.reservedSeats == returnInfo.movieInfo.availableSeats) {
       println(s"* ReserveMovie - No Seats Available")
       returnInfo.operationStatus = false
       returnInfo.msg = "No Seats Available"
       return returnInfo
     } else {
-      returnInfo.reservedSeats += 1
+      returnInfo.movieInfo.reservedSeats += 1
     }
 
-    val saveInfo = MovieInfo(returnInfo.imdbId, returnInfo.availableSeats, returnInfo.reservedSeats, returnInfo.screenId, returnInfo.movieTitle)
+    val saveInfo = MovieInfo(returnInfo.movieInfo.imdbId, returnInfo.movieInfo.availableSeats, returnInfo.movieInfo.reservedSeats,
+      returnInfo.movieInfo.screenId, returnInfo.movieInfo.movieTitle)
     val saveJson = saveInfo.toJson.toString
 
-    redis.set(returnInfo.imdbId+returnInfo.screenId, saveJson)
+    redis.set(returnInfo.movieInfo.imdbId+returnInfo.movieInfo.screenId, saveJson)
 
     returnInfo
   }
