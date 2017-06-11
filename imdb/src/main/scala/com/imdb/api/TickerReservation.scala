@@ -101,7 +101,7 @@ class TickerReservation(portNumber: Int) extends RestApi {
 
       case _ => {
         println(s"* GetMovie - Movie Returned: ${movieId}, ${screenId}\n")
-        ReturnInfo(true, "Operation Succeeded", movieInfo.imdbId, movieInfo.availableSeats, 0,
+        ReturnInfo(true, "Operation Succeeded", movieInfo.imdbId, movieInfo.availableSeats, movieInfo.reservedSeats,
           movieInfo.screenId, movieInfo.movieTitle)
       }
     }
@@ -109,7 +109,7 @@ class TickerReservation(portNumber: Int) extends RestApi {
 
   def reserveMovie(movieReservation: MovieReservation): ReturnInfo = {
 
-    var returnInfo = getMovie(movieReservation.imdbId, movieReservation.screenId)
+    val returnInfo = getMovie(movieReservation.imdbId, movieReservation.screenId)
 
     returnInfo.operationStatus match {
       case true => {
