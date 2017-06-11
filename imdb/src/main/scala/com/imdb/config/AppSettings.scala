@@ -14,6 +14,8 @@ trait AppSettings {
 
   lazy private val configApp = ConfigFactory.load()
 
+  val requestActorName = configApp.getString("request.actorName")
+
   /*
   * Application
   * Actors

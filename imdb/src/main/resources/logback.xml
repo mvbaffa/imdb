@@ -1,0 +1,32 @@
+<configuration>
+    <property name="debug" value="false"/>
+    <if condition='property("debug").equalsIgnoreCase("true")'>
+        <then>
+            <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+                <target>System.out</target>
+                <encoder>
+                    <pattern>[%-5level] [%d{yyyy-MM-dd HH:mm:ss.SSS}] - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </then>
+    </if>
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>log/app.log</file>
+        <append>false</append>
+        <encoder>
+            <pattern>[%-5level] [%d{yyyy-MM-dd HH:mm:ss.SSS}] %logger{1} %X{sourceThread} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="akka" level="DEBUG"/>
+
+    <!--Options: OFF, ERROR, WARNING, INFO, DEBUG-->
+    <root level="INFO">
+        <if condition='property("debug").equalsIgnoreCase("true")'>
+            <then>
+                <appender-ref ref="STDOUT"/>
+            </then>
+        </if>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>
