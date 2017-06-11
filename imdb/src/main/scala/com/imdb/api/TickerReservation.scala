@@ -1,18 +1,17 @@
 package com.imdb.api
 
-import spray.json._
-import DefaultJsonProtocol._
-import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.actor.{Actor, Props}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import com.imdb.config.AppSettings._
-import com.imdb.protocols.Protocols.StopTickerReservation
 import MovieRegisterProtocol._
 import MovieInfoProtocol._
+import com.redis.RedisClient
 
 trait RestApi {
+
+  def registerMovie(movieRegister: MovieRegister): MovieInfo
+  def getMovie(movieId: String): MovieInfo
 
   val route =
     pathPrefix("movies") {
@@ -21,45 +20,52 @@ trait RestApi {
           complete("Movie Get called")
         }
       } ~
-        path("Register") {
-          (post & entity(as[MovieRegister])) { register =>
-            val movieInfo = MovieInfo(register.imdbId, register.availableSeats, 0, register.screenId, "")
-            complete(movieInfo)
-          }
-        } ~
-        path("Info") {
-          (post & entity(as[MovieInfo])) { movie =>
-            complete(movie)
-          }
+      (get & path(Segment)) { id =>
+        complete {
+          getMovie(id)
         }
+      } ~
+      path("Register") {
+        (post & entity(as[MovieRegister])) { register =>
+          val movieInfo = registerMovie(register)
+          complete(movieInfo)
+        }
+      } ~
+      path("Info") {
+        (post & entity(as[MovieInfo])) { movie =>
+          complete(movie)
+        }
+      }
     }
 }
 
 class TickerReservation(portNumber: Int) extends RestApi {
 
+  val redis = new RedisClient("localhost", 6379)
   val bindingFuture = Http().bindAndHandle(route, "localhost", portNumber)
+
+  def registerMovie(movieRegister: MovieRegister): MovieInfo = {
+
+    val movieInfo = MovieInfo(movieRegister.imdbId, movieRegister.availableSeats, 0, movieRegister.screenId, "N/A")
+
+    redis.sadd(movieRegister.imdbId, movieInfo)
+    println(s"\n Movie Registered: ${movieInfo}")
+
+    movieInfo
+  }
+
+  def getMovie(movieId: String): MovieInfo = {
+
+    val redisInfo = redis.smembers(movieId).get
+    println(s"\n Movie Returned: ${redisInfo}")
+
+    MovieInfo("N/A", 0, 0, "N/A", "N/A")
+//    val movieInfo = MovieInfo(redisInfo.imdbId, redisInfo.availableSeats, 0, movieRegister.screenId, "N/A")
+  }
 
   def shutDown: Unit = {
     bindingFuture.flatMap(_.unbind()) // trigger unbinding from the port
   }
 }
 
-object TickerReservationActor {
-  def props(): Props = Props(new TickerReservationActor())
-}
-
-class TickerReservationActor extends Actor {
-
-  var ticketReservation: TickerReservation = new TickerReservation(portNumber)
-
-  def receive: Receive = {
-
-    case StopTickerReservation => {
-      ticketReservation.shutDown
-    }
-
-    case msg =>
-      log.info(s"[${self.path.name}]: UNKNOWN MESSAGE: $msg FROM ${sender.path}")
-  }
-}
 
