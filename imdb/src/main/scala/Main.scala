@@ -1,6 +1,11 @@
-import Main.shutdown
+import akka.pattern.ask
+import akka.util.Timeout
+
+import scala.concurrent.duration._
 import com.imdb.client.RequestActor
 import com.imdb.protocols.Protocols.{GetIp, MovieInfo}
+
+import scala.concurrent.Await
 
 object Main extends App {
 
@@ -11,8 +16,12 @@ object Main extends App {
 
   val requestActor = actorSystem.actorOf(RequestActor.props, requestActorName)
 
-  requestActor ! GetIp("https://api.ipify.org?format=json")
-  requestActor ! MovieInfo("tt0111161")
+  implicit val timeout = Timeout(30 seconds)
+
+  requestActor ? GetIp("https://api.ipify.org?format=json")
+  requestActor ? MovieInfo("tt0111161")
+//  val answer = Await.result(requestActor ? MovieInfo("tt0111161"), timeout.duration)
+//  println(s"answer = $answer")
 
   actorSystem.whenTerminated
 

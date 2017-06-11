@@ -10,7 +10,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import com.imdb.config.AppSettings._
 import com.imdb.protocols.Protocols.{GetIp, MovieInfo}
 
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 
 object RequestActor {
 
@@ -41,22 +41,23 @@ object RequestActor {
     println(url)
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
 
-//    var result = ""
+    var result = ""
 
     responseFuture map { res =>
       res.status match {
         case OK =>
           Unmarshal(res.entity).to[String].map { info =>
-            println(s"The information is: $info")
+            result = s"The information is: $info"
           }
         case _ =>
           Unmarshal(res.entity).to[String].map { body =>
-            println(s"The response status is ${res.status} and response body is ${body}")
+            result = s"The response status is ${res.status} and response body is ${body}"
           }
       }
     }
 
-    return ""
+    println(result)
+    return result
   }
 }
 
