@@ -9,18 +9,29 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import com.imdb.config.AppSettings._
 import com.imdb.protocols.Protocols.StopTickerReservation
+import MovieRegisterProtocol._
 import MovieInfoProtocol._
 
 trait RestApi {
 
   val route =
-    pathPrefix("movies"){
-      (post & entity(as[MovieInfo])) { movie =>
-        complete(movie)
+    pathPrefix("movies") {
+      path("All") {
+        get {
+          complete("Movie Get called")
+        }
       } ~
-      get {
-        complete("Movie Get called")
-      }
+        path("Register") {
+          (post & entity(as[MovieRegister])) { register =>
+            val movieInfo = MovieInfo(register.imdbId, register.availableSeats, 0, register.screenId, "")
+            complete(movieInfo)
+          }
+        } ~
+        path("Info") {
+          (post & entity(as[MovieInfo])) { movie =>
+            complete(movie)
+          }
+        }
     }
 }
 
