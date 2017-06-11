@@ -18,6 +18,7 @@ trait AppSettings {
   val ticketReservationActorName = configApp.getString("api.actorName")
 
   val requestActorName = configApp.getString("request.actorName")
+  val requestUrl = configApp.getString("request.requestUrl")
 
   /*
   * Application

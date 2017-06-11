@@ -6,14 +6,21 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import com.imdb.config.AppSettings._
 import MovieProtocol._
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.http.scaladsl.model.StatusCodes.OK
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import com.imdb.client.IpInfo
 import com.redis.RedisClient
+
+import scala.concurrent.Future
 
 trait RestApi {
 
+  def getMovieTitle(movieId: String): String
   def registerMovie(movieRegister: MovieRegister): ReturnInfo
   def reserveMovie(movieReservation: MovieReservation): ReturnInfo
-  def getMovie(movieId: String, screenId: String): ReturnInfo
   def fetchMovie(movieId: String, screenId: String): MovieInfo
+  def getMovie(movieId: String, screenId: String): ReturnInfo
 
   val route =
     pathPrefix("movies") {
@@ -52,6 +59,29 @@ class TickerReservation(portNumber: Int) extends RestApi {
   val redis = new RedisClient("localhost", 6379)
   val bindingFuture = Http().bindAndHandle(route, "localhost", portNumber)
 
+  def getMovieTitle(movieId: String): String = {
+
+    val url = requestUrl + movieId
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
+
+    var result = ""
+
+    responseFuture map { res =>
+      res.status match {
+        case OK =>
+          Unmarshal(res.entity).to[MovieImdb].map { info =>
+            result = info.title
+          }
+        case _ =>
+          Unmarshal(res.entity).to[String].map { body =>
+            result = s"The response status is ${res.status} and response body is ${body}"
+          }
+      }
+    }
+
+    result
+  }
+
   def registerMovie(movieRegister: MovieRegister): ReturnInfo = {
 
     val movieInfo = MovieInfo(movieRegister.imdbId, movieRegister.availableSeats, 0, movieRegister.screenId, "N/A")
@@ -59,9 +89,6 @@ class TickerReservation(portNumber: Int) extends RestApi {
 
     redis.set(movieRegister.imdbId+movieRegister.screenId, movieJson)
     println(s"* Register Movie - Movie Returned: ${movieInfo}\n")
-
-//    val returnInfo = ReturnInfo(true, "Operation Succeeded", movieInfo.imdbId, movieInfo.availableSeats, movieInfo.reservedSeats,
-//      movieInfo.screenId, movieInfo.movieTitle)
 
     val returnInfo = ReturnInfo(true, "Operation Succeeded", movieInfo)
     returnInfo
