@@ -1,10 +1,9 @@
 import akka.pattern.ask
 import akka.util.Timeout
-import com.imdb.api.TickerReservationActor
-
 import scala.concurrent.duration._
 import com.imdb.client.RequestActor
-import com.imdb.protocols.Protocols.{GetIp, MovieInfo, StopTickerReservation}
+import com.imdb.protocols.Protocols.{StopTickerReservation}
+import com.imdb.api.TickerReservationActor
 
 import scala.concurrent.Await
 

@@ -16,7 +16,7 @@ trait RestApi {
   val route =
     pathPrefix("movies"){
       (post & entity(as[MovieInfo])) { movie =>
-        complete("Movie Post called")
+        complete(movie)
       } ~
       get {
         complete("Movie Get called")
@@ -32,7 +32,6 @@ class TickerReservation(portNumber: Int) extends RestApi {
     bindingFuture.flatMap(_.unbind()) // trigger unbinding from the port
   }
 }
-
 
 object TickerReservationActor {
   def props(): Props = Props(new TickerReservationActor())
