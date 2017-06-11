@@ -1,6 +1,6 @@
 object Main extends App {
 
-  import config.ServiceSettings._
+  import com.imdb.config.AppSettings._
 
   log.info(s"\n * \n * Imdb API Application started \n * \n")
 }

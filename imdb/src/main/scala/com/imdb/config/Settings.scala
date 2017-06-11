@@ -1,12 +1,11 @@
-package config
-
+package com.imdb.config
 
 import akka.actor.ActorSystem
 import akka.event.{Logging, LoggingAdapter}
 import akka.stream.ActorMaterializer
 import com.typesafe.config.ConfigFactory
 
-trait ServiceSettings {
+trait AppSettings {
 
   /*
   * Application
@@ -25,8 +24,8 @@ trait ServiceSettings {
   implicit val log: LoggingAdapter = Logging(actorSystem, getClass)
   implicit val materializer: ActorMaterializer = ActorMaterializer()
 
-  log.info(s"\n * \n * Service Settings Ready \n * \n")
+//  log.info(s"\n * \n * Service Settings Ready \n * \n")
 
 }
 
-object ServiceSettings extends ServiceSettings
+object AppSettings extends AppSettings
